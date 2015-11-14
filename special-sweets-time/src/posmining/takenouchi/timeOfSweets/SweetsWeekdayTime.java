@@ -69,7 +69,7 @@ public class SweetsWeekdayTime {
 		// MapReduceジョブを投げ，終わるまで待つ．
 		job.waitForCompletion(true);
 
-		//		new ArrangeTSVFile().exportGraphData(outputpath, "part-r-00000", "table.csv");
+		new ArrangeTSVFile().exportHeatmapData(outputpath, "part-r-00000", "table.csv");
 	}
 
 	/**
