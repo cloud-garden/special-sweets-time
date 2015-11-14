@@ -1,4 +1,4 @@
-package posmining.takenouchi.timeOfSweets;
+package posmining.takenouchi.sweets;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -24,18 +24,16 @@ import posmining.utils.PosUtils;
 import posmining.utils.graph.ArrangeTSVFile;
 
 /**
- * 売れる日時の
- * 出力形式：csvで記述，日付，時間，売れた回数
  * @author Takenouchi
  */
-public class SweetsHolidayTime {
+public class SweetsDateTime {
 
 	// MapReduceを実行するためのドライバ
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
 
 		// MapperクラスとReducerクラスを指定
 		Job job = new Job(new Configuration());
-		job.setJarByClass(SweetsHolidayTime.class);       // ★このファイルのメインクラスの名前
+		job.setJarByClass(SweetsDateTime.class);       // ★このファイルのメインクラスの名前
 		job.setMapperClass(MyMapper.class);
 		job.setReducerClass(MyReducer.class);
 		job.setJobName("2015005");                   // ★自分の学籍番号
@@ -52,7 +50,7 @@ public class SweetsHolidayTime {
 
 		// 入出力ファイルを指定
 		String inputpath = "posdata";
-		String outputpath = "out/takenouchi/SweetsHolidayTime";     // ★MRの出力先
+		String outputpath = "out/takenouchi/sweets/dateTime";     // ★MRの出力先
 		if (args.length > 0) {
 			inputpath = args[0];
 		}
@@ -72,6 +70,7 @@ public class SweetsHolidayTime {
 		new ArrangeTSVFile().exportHeatmapData(outputpath, "part-r-00000", "table.csv");
 	}
 
+
 	/**
 	 * Mapperクラスのmap関数を定義
 	 * このメソッドは入力csvファイルの一行ごとに実行される．
@@ -82,15 +81,15 @@ public class SweetsHolidayTime {
 			// csvファイルをカンマで分割して，配列に格納する
 			String csv[] = value.toString().split(",");
 
-			if(PosUtils.isSweetsCode(csv[PosUtils.ITEM_CATEGORY_CODE])
-					&& PosUtils.isHoliday(csv)){
-				String date = csv[PosUtils.WEEK]+"\t" + csv[PosUtils.HOUR];
-
-				String receiptId = csv[PosUtils.RECEIPT_ID];
-
-				// emitする （emitデータはCSKVオブジェクトに変換すること）
-				context.write(new CSKV(date), new CSKV(receiptId));
+			if(!PosUtils.isSweetsCode(csv[PosUtils.ITEM_CATEGORY_CODE])){
+				return;
 			}
+			String date = csv[PosUtils.DATE] +"\t" +csv[PosUtils.HOUR];
+
+			String receiptId = csv[PosUtils.RECEIPT_ID];
+
+			// emitする （emitデータはCSKVオブジェクトに変換すること）
+			context.write(new CSKV(date), new CSKV(receiptId));
 		}
 	}
 

@@ -1,4 +1,4 @@
-package posmining.takenouchi.timeOfSweets;
+package posmining.takenouchi.newgoods;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -24,18 +24,17 @@ import posmining.utils.PosUtils;
 import posmining.utils.graph.ArrangeTSVFile;
 
 /**
- * 売れる日時の
  * 出力形式：csvで記述，日付，時間，売れた回数
  * @author Takenouchi
  */
-public class SweetsWeekdayTime {
+public class NewgoodsWeekday {
 
 	// MapReduceを実行するためのドライバ
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
 
 		// MapperクラスとReducerクラスを指定
 		Job job = new Job(new Configuration());
-		job.setJarByClass(SweetsWeekdayTime.class);       // ★このファイルのメインクラスの名前
+		job.setJarByClass(NewgoodsWeekday.class);       // ★このファイルのメインクラスの名前
 		job.setMapperClass(MyMapper.class);
 		job.setReducerClass(MyReducer.class);
 		job.setJobName("2015005");                   // ★自分の学籍番号
@@ -52,7 +51,7 @@ public class SweetsWeekdayTime {
 
 		// 入出力ファイルを指定
 		String inputpath = "posdata";
-		String outputpath = "out/takenouchi/SweetsWeekdayTime";     // ★MRの出力先
+		String outputpath = "out/takenouchi/newGoods/weekday";     // ★MRの出力先
 		if (args.length > 0) {
 			inputpath = args[0];
 		}
@@ -68,8 +67,6 @@ public class SweetsWeekdayTime {
 
 		// MapReduceジョブを投げ，終わるまで待つ．
 		job.waitForCompletion(true);
-
-		new ArrangeTSVFile().exportHeatmapData(outputpath, "part-r-00000", "table.csv");
 	}
 
 	/**
@@ -82,9 +79,9 @@ public class SweetsWeekdayTime {
 			// csvファイルをカンマで分割して，配列に格納する
 			String csv[] = value.toString().split(",");
 
-			if(PosUtils.isSweetsCode(csv[PosUtils.ITEM_CATEGORY_CODE])
+			if(PosUtils.isNewgoods(csv)
 					&& !PosUtils.isHoliday(csv)){
-				String date = csv[PosUtils.WEEK] +"\t" + csv[PosUtils.HOUR];
+				String date = csv[PosUtils.WEEK];
 
 				String receiptId = csv[PosUtils.RECEIPT_ID];
 

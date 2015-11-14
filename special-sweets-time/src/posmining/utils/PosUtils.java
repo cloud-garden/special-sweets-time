@@ -149,4 +149,9 @@ public class PosUtils {
 		else
 			return false;
 	}
+
+	public static boolean isNewgoods(String[] csv){
+		return csv[ITEM_CATEGORY_CODE].contains("900000");
+	}
+
 }
