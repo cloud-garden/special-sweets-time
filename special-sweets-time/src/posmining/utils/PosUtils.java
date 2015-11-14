@@ -98,6 +98,9 @@ public class PosUtils {
 	public static final int ITEM_CATEGORY_NAME = 19;
 
 
+	private static final String[] sweetsCodes = {"061","062","163001","163002","163003","163004","191","192","193"
+		,"193","195","196","198","205","261","262"};
+
 	/**
 	 * MRの出力フォルダを削除する．
 	 * （出力フォルダの上書きエラーを避けるため）
@@ -128,5 +131,22 @@ public class PosUtils {
 
 	public static Text convertToText(double from) {
 		return new Text(String.valueOf(from));
+	}
+
+	public static boolean isSweetsCode(String code){
+		for(String sweets : sweetsCodes){
+			if(code.startsWith(sweets)){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean isHoliday(String[] csv){
+		int week = Integer.parseInt(csv[WEEK]);
+		if(week == 6 || week == 7 || csv[IS_HOLIDAY].equals("1"))
+			return true;
+		else
+			return false;
 	}
 }

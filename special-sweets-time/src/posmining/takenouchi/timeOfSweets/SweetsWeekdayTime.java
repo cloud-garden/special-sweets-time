@@ -1,6 +1,8 @@
-package posmining.enshu;
+package posmining.takenouchi.timeOfSweets;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -14,22 +16,26 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
+
+
+
 import posmining.utils.CSKV;
 import posmining.utils.PosUtils;
+import posmining.utils.graph.ArrangeTSVFile;
 
 /**
- * 全おにぎりの販売個数を出力する
- * @author shin
- *
+ * 売れる日時の
+ * 出力形式：csvで記述，日付，時間，売れた回数
+ * @author Takenouchi
  */
-public class OnigiriCount {
+public class SweetsWeekdayTime {
 
 	// MapReduceを実行するためのドライバ
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
 
 		// MapperクラスとReducerクラスを指定
 		Job job = new Job(new Configuration());
-		job.setJarByClass(OnigiriCount.class);       // ★このファイルのメインクラスの名前
+		job.setJarByClass(SweetsWeekdayTime.class);       // ★このファイルのメインクラスの名前
 		job.setMapperClass(MyMapper.class);
 		job.setReducerClass(MyReducer.class);
 		job.setJobName("2015005");                   // ★自分の学籍番号
@@ -46,7 +52,7 @@ public class OnigiriCount {
 
 		// 入出力ファイルを指定
 		String inputpath = "posdata";
-		String outputpath = "out/onigiriCount";     // ★MRの出力先
+		String outputpath = "out/takenouchi/SweetsWeekdayTime";     // ★MRの出力先
 		if (args.length > 0) {
 			inputpath = args[0];
 		}
@@ -62,42 +68,48 @@ public class OnigiriCount {
 
 		// MapReduceジョブを投げ，終わるまで待つ．
 		job.waitForCompletion(true);
+
+		//		new ArrangeTSVFile().exportGraphData(outputpath, "part-r-00000", "table.csv");
 	}
 
-
-	// Mapperクラスのmap関数を定義
+	/**
+	 * Mapperクラスのmap関数を定義
+	 * このメソッドは入力csvファイルの一行ごとに実行される．
+	 *　最後にkeyとvalueをemitしてあげる．
+	 */
 	public static class MyMapper extends Mapper<LongWritable, Text, CSKV, CSKV> {
 		protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-
 			// csvファイルをカンマで分割して，配列に格納する
 			String csv[] = value.toString().split(",");
 
-			// おにぎりでないレシートは無視
-			if (csv[PosUtils.ITEM_CATEGORY_NAME].equals("おにぎり・おむすび") == false) {
-				return;
+			if(PosUtils.isSweetsCode(csv[PosUtils.ITEM_CATEGORY_CODE])
+					&& !PosUtils.isHoliday(csv)){
+				String date = csv[PosUtils.WEEK] +"\t" + csv[PosUtils.HOUR];
+
+				String receiptId = csv[PosUtils.RECEIPT_ID];
+
+				// emitする （emitデータはCSKVオブジェクトに変換すること）
+				context.write(new CSKV(date), new CSKV(receiptId));
 			}
-
-			// valueとなる販売個数を取得
-			String count = csv[PosUtils.ITEM_COUNT];
-
-			// emitする （emitデータはCSKVオブジェクトに変換すること）
-			context.write(new CSKV("onigiri"), new CSKV(count));
 		}
 	}
 
 
-	// Reducerクラスのreduce関数を定義
+	/**
+	 *  Reducerクラスのreduce関数を定義
+	 *	このメソッドはkeyごとに一度実行される．
+	 */
 	public static class MyReducer extends Reducer<CSKV, CSKV, CSKV, CSKV> {
 		protected void reduce(CSKV key, Iterable<CSKV> values, Context context) throws IOException, InterruptedException {
 
-			// 売り上げを合計
-			int count = 0;
-			for (CSKV value : values) {
-				count += value.toInt();
+			Set<String> set = new HashSet<String>();
+			for(CSKV repeiptId : values){
+				set.add(repeiptId.toString());
 			}
 
 			// emit
-			context.write(key, new CSKV(count));
+			context.write(key, new CSKV(set.size()));
 		}
 	}
+
 }
