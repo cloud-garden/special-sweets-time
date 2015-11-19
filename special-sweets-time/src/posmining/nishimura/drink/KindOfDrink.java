@@ -1,7 +1,11 @@
 package posmining.nishimura.drink;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -19,6 +23,8 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 
 
+
+
 import posmining.utils.CSKV;
 import posmining.utils.PosUtils;
 import posmining.utils.graph.ArrangeTSVFile;
@@ -27,6 +33,9 @@ import posmining.utils.graph.ArrangeTSVFile;
  * @author Nishimura
  */
 public class KindOfDrink {
+
+	//一時的にスイーツを含むレシートIDを格納しておくためのリスト
+	static List<String> receipt_id = new ArrayList<String>();
 
 	// MapReduceを実行するためのドライバ
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
@@ -55,6 +64,9 @@ public class KindOfDrink {
 			inputpath = args[0];
 		}
 
+		//レシートIDを読み込み
+		read(receipt_id);
+
 		FileInputFormat.setInputPaths(job, new Path(inputpath));
 		FileOutputFormat.setOutputPath(job, new Path(outputpath));
 
@@ -75,18 +87,27 @@ public class KindOfDrink {
 	 *　最後にkeyとvalueをemitしてあげる．
 	 */
 	public static class MyMapper extends Mapper<LongWritable, Text, CSKV, CSKV> {
+
+		int i=0;
+		String item_category_code;
+		String item_count;
+
 		protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 			// csvファイルをカンマで分割して，配列に格納する
 			String csv[] = value.toString().split(",");
 
-			//ドリンクでないデータは無視
-			if(!PosUtils.isDrinkCode(csv[PosUtils.ITEM_CATEGORY_CODE])){
-				return;
+			if (i>= receipt_id.size()){
+				String target = receipt_id.get(i);
+				//同じレシートidでないデータは無視
+				if(target !=csv[PosUtils.RECEIPT_ID]){
+					return;
+				}
+				item_category_code = csv[PosUtils.ITEM_CATEGORY_CODE];
+				item_count = csv[PosUtils.ITEM_COUNT];
 			}
-			String item_category_code = csv[PosUtils.ITEM_CATEGORY_CODE];
 
 			// emitする （emitデータはCSKVオブジェクトに変換すること）
-			context.write(new CSKV(item_category_code), null);
+			context.write(new CSKV(item_category_code), new CSKV(item_count));
 		}
 	}
 
@@ -105,6 +126,21 @@ public class KindOfDrink {
 
 			// emit
 			context.write(key, new CSKV(set.size()));
+		}
+	}
+	private static void read(List<String> receipt_id) throws IOException{
+		BufferedReader br = null;
+
+		String file_path = "/out/nishimura/drink/";
+
+		br = new BufferedReader(new FileReader(file_path));
+		String line = null;
+		// ファイルの読み込み
+		while ((line = br.readLine()) != null) {
+			String[] array = line.split(",");
+			if (array.length == 2) {
+				receipt_id.add(array[0]);
+			}
 		}
 	}
 

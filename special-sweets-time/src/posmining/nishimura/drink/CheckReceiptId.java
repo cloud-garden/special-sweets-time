@@ -16,13 +16,8 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
-
-
-
 import posmining.utils.CSKV;
 import posmining.utils.PosUtils;
-import posmining.utils.graph.ArrangeTSVFile;
-
 /**
  * @author Nishimura
  */
@@ -38,7 +33,7 @@ public class CheckReceiptId {
 		job.setReducerClass(MyReducer.class);
 		job.setJobName("2015028");                   // ★自分の学籍番号
 
-		// 入出力フォーマットをテキストに指定f
+		// 入出力フォーマットをテキストに指定
 		job.setInputFormatClass(TextInputFormat.class);
 		job.setOutputFormatClass(TextOutputFormat.class);
 
@@ -50,7 +45,8 @@ public class CheckReceiptId {
 
 		// 入出力ファイルを指定
 		String inputpath = "posdata";
-		String outputpath = "out/nishimura/have_sweets_ReceiptId.csv";     // ★MRの出力先
+		String outputpath = "out/nishimura/drink/checkReceiptId/";     // ★MRの出力先
+
 		if (args.length > 0) {
 			inputpath = args[0];
 		}
@@ -77,19 +73,17 @@ public class CheckReceiptId {
 	public static class MyMapper extends Mapper<LongWritable, Text, CSKV, CSKV> {
 		protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 			// csvファイルをカンマで分割して，配列に格納する
-			String csv[] = value.toString().split(",,");
+			String csv[] = value.toString().split(",");
 
 			//スイーツのないレシートは無視
 			if(!PosUtils.isSweetsCode(csv[PosUtils.ITEM_CATEGORY_CODE])){
 				return;
 			}
-			//最初にレシピIDを取得
+			//最初にレシートIDを取得
 			String receiptId = csv[PosUtils.RECEIPT_ID];
-			//JANコードを取得
-			String item_category_code =csv[PosUtils.ITEM_CATEGORY_CODE];
 
 			// emitする （emitデータはCSKVオブジェクトに変換すること）
-			context.write(new CSKV(receiptId), new CSKV(item_category_code));
+			context.write(new CSKV(receiptId),null);
 		}
 	}
 
@@ -110,5 +104,4 @@ public class CheckReceiptId {
 			context.write(key, new CSKV(set.size()));
 		}
 	}
-
 }
