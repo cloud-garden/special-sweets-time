@@ -1,9 +1,6 @@
 package posmining.nishimura.drink;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -15,14 +12,12 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-
 import posmining.utils.CSKV;
 import posmining.utils.PosUtils;
 /**
  * @author Nishimura
  */
 public class CheckReceiptId {
-
 	// MapReduceを実行するためのドライバ
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
 
@@ -33,7 +28,7 @@ public class CheckReceiptId {
 		job.setReducerClass(MyReducer.class);
 		job.setJobName("2015028");                   // ★自分の学籍番号
 
-		// 入出力フォーマットをテキストに指定
+		// 入出力フォーマットをテキストに指定f
 		job.setInputFormatClass(TextInputFormat.class);
 		job.setOutputFormatClass(TextOutputFormat.class);
 
@@ -45,8 +40,7 @@ public class CheckReceiptId {
 
 		// 入出力ファイルを指定
 		String inputpath = "posdata";
-		String outputpath = "out/nishimura/drink/checkReceiptId/";     // ★MRの出力先
-
+		String outputpath = "out/nishimura/drink/CheckReceiptId";     // ★MRの出力先
 		if (args.length > 0) {
 			inputpath = args[0];
 		}
@@ -56,14 +50,11 @@ public class CheckReceiptId {
 
 		// 出力フォルダは実行の度に毎回削除する（上書きエラーが出るため）
 		PosUtils.deleteOutputDir(outputpath);
-
 		// Reducerで使う計算機数を指定
 		job.setNumReduceTasks(8);
-
 		// MapReduceジョブを投げ，終わるまで待つ．
 		job.waitForCompletion(true);
 	}
-
 
 	/**
 	 * Mapperクラスのmap関数を定義
@@ -71,37 +62,35 @@ public class CheckReceiptId {
 	 *　最後にkeyとvalueをemitしてあげる．
 	 */
 	public static class MyMapper extends Mapper<LongWritable, Text, CSKV, CSKV> {
-		protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-			// csvファイルをカンマで分割して，配列に格納する
-			String csv[] = value.toString().split(",");
 
-			//スイーツのないレシートは無視
+		//1つ前のレシートIDを比較するための変数
+		public String receiptId_temp = "out";
+
+		protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+			// csvファイルを配列に格納する
+			String csv[] = value.toString().split(",");
+			//スイーツ以外は無視
 			if(!PosUtils.isSweetsCode(csv[PosUtils.ITEM_CATEGORY_CODE])){
 				return;
 			}
-			//最初にレシートIDを取得
-			String receiptId = csv[PosUtils.RECEIPT_ID];
-
+			//1つ前に読み取ったレシートIDと同じであれば無視(重複回避)
+			else if(receiptId_temp.equals(csv[PosUtils.RECEIPT_ID])){
+				return;
+			}
+			//比較用のレシートIDを保持
+			receiptId_temp = csv[PosUtils.RECEIPT_ID];
 			// emitする （emitデータはCSKVオブジェクトに変換すること）
-			context.write(new CSKV(receiptId),null);
+			context.write(new CSKV(receiptId_temp), new CSKV(receiptId_temp));
 		}
 	}
-
-
 	/**
 	 *  Reducerクラスのreduce関数を定義
 	 *	このメソッドはkeyごとに一度実行される．
 	 */
 	public static class MyReducer extends Reducer<CSKV, CSKV, CSKV, CSKV> {
 		protected void reduce(CSKV key, Iterable<CSKV> values, Context context) throws IOException, InterruptedException {
-
-			Set<String> set = new HashSet<String>();
-			for(CSKV ReceiptId : values){
-				set.add(ReceiptId.toString());
-			}
-
-			// emit
-			context.write(key, new CSKV(set.size()));
+			// そのままにする
+			context.write(key, null);
 		}
 	}
 }
