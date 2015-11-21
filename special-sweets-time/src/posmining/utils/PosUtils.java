@@ -100,7 +100,8 @@ public class PosUtils {
 
 	private static final String[] sweetsCodes = {"061","062","163001","163002","163003","163004","191","192","193"
 		,"193","195","196","198","205","261","262"};
-	private static final String[] drinkCodes={"071","072","073","074","075","076","077","078","079","080","081","082","083","084","085"};
+	private static final String[] drinkCodes = {"071","072","073","074","075","076","077","078","079","080","081",
+		"082","083","084","085"};
 
 	/**
 	 * MRの出力フォルダを削除する．
@@ -154,7 +155,6 @@ public class PosUtils {
 	public static boolean isNewgoods(String[] csv){
 		return csv[ITEM_CATEGORY_CODE].contains("900000");
 	}
-
 
 	public static boolean isDrinkCode(String code){
 		for(String drink : drinkCodes){
