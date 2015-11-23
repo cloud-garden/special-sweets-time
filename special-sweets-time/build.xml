@@ -16,64 +16,12 @@
 	</target>
 	-->
 
-	<target name="run.NewgoodsDateTime" depends="prepare">
+	<target name="run.ChildDateTime" depends="prepare">
 			<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
-				command="hadoop jar main.jar posmining.takenouchi.newgoods.NewgoodsDateTime s3://cspiral-bigdata/posdata/"
+				command="hadoop jar main.jar posmining.takenouchi.child.ChildDateTime s3://cspiral-bigdata/posdata/"
 			/>
 	</target>
 
-	<target name="run.NewgoodsHoliday" depends="prepare">
-			<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
-				command="hadoop jar main.jar posmining.takenouchi.newgoods.NewgoodsHoliday s3://cspiral-bigdata/posdata/"
-			/>
-	</target>
-
-	<target name="run.NewgoodsHolidayTime" depends="prepare">
-			<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
-				command="hadoop jar main.jar posmining.takenouchi.newgoods.NewgoodsHolidayTime s3://cspiral-bigdata/posdata/"
-			/>
-	</target>
-
-	<target name="run.NewgoodsWeekday" depends="prepare">
-				<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
-					command="hadoop jar main.jar posmining.takenouchi.newgoods.NewgoodsWeekday s3://cspiral-bigdata/posdata/"
-				/>
-		</target>
-
-	<target name="run.NewgoodsWeekdayTime" depends="prepare">
-			<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
-				command="hadoop jar main.jar posmining.takenouchi.newgoods.NewgoodsWeekdayTime s3://cspiral-bigdata/posdata/"
-			/>
-	</target>
-
-	<target name="run.SweetsDateTime" depends="prepare">
-				<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
-					command="hadoop jar main.jar posmining.takenouchi.sweets.SweetsDateTime s3://cspiral-bigdata/posdata/"
-				/>
-		</target>
-		<target name="run.SweetsHoliday" depends="prepare">
-				<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
-					command="hadoop jar main.jar posmining.takenouchi.sweets.SweetsHoliday s3://cspiral-bigdata/posdata/"
-				/>
-		</target>
-
-		<target name="run.SweetsHolidayTime" depends="prepare">
-				<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
-					command="hadoop jar main.jar posmining.takenouchi.sweets.SweetsHolidayTime s3://cspiral-bigdata/posdata/"
-				/>
-		</target>
-
-		<target name="run.SweetsWeekday" depends="prepare">
-					<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
-						command="hadoop jar main.jar posmining.takenouchi.sweets.SweetsWeekday s3://cspiral-bigdata/posdata/"
-					/>
-			</target>
-
-		<target name="run.SweetsWeekdayTime" depends="prepare">
-				<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
-					command="hadoop jar main.jar posmining.takenouchi.sweets.SweetsWeekdayTime s3://cspiral-bigdata/posdata/"
-				/>
-		</target>
 
 	<!-- クラスタ実行のための準備タスク．プロジェクトをビルドしてJARに固めてSCPで送信する -->
 	<target name="prepare">

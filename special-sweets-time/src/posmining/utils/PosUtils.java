@@ -100,6 +100,7 @@ public class PosUtils {
 
 	private static final String[] sweetsCodes = {"061","062","163001","163002","163003","163004","191","192","193"
 		,"193","195","196","198","205","261","262"};
+	private static final String[] childCodes = {"061","062","196"};
 	private static final String[] drinkCodes = {"071","072","073","074","075","076","077","078","079","080","081",
 		"082","083","084","085"};
 
@@ -144,6 +145,15 @@ public class PosUtils {
 		return false;
 	}
 
+	public static boolean isChildCode(String code){
+		for(String sweets : childCodes){
+			if(code.startsWith(sweets)){
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static boolean isHoliday(String[] csv){
 		int week = Integer.parseInt(csv[WEEK]);
 		if(week == 6 || week == 7 || csv[IS_HOLIDAY].equals("1"))
@@ -164,4 +174,6 @@ public class PosUtils {
 		}
 		return false;
 	}
+
+
 }
