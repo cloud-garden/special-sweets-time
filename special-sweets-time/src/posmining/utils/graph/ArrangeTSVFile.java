@@ -16,6 +16,7 @@ public class ArrangeTSVFile {
 		File outFile = new File(fileDir , outFileName);
 
 		try {
+			outFile.createNewFile();
 			PrintWriter writer = new PrintWriter(outFile);
 
 			for(int i = 0 ; i < 24 ; i++){
