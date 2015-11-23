@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -27,11 +28,14 @@ import posmining.utils.PosUtils;
 public class KindOfDrink {
 	//一時的にスイーツを含むレシートIDを格納しておくためのリスト
 	public static List<String> receipt_id = new ArrayList<String>();
+	/*
 	//本命データ（分類コード）
 	public static List<String> sava_item_category = new ArrayList<String>();
 	//本命データ（個数）
 	public static List<Integer> save_item_count = new ArrayList<Integer>();
-
+	 */
+	//本命データ（分類コード、個数）
+	public static TreeMap<String,Integer> save_item = new TreeMap<String,Integer>();
 
 	// MapReduceを実行するためのドライバ
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
@@ -54,7 +58,7 @@ public class KindOfDrink {
 
 		// 入出力ファイルを指定
 		String inputpath = "posdata";
-		String outputpath = "out/nishimura/result/";     // ★MRの出力先
+		String outputpath = "out/nishimura/result";     // ★MRの出力先
 
 		if (args.length > 0) {
 			inputpath = args[0];
@@ -95,40 +99,29 @@ public class KindOfDrink {
 				return;
 			}
 			//同じレシートidでないデータは無視
-			else if(!compare_list(csv[PosUtils.RECEIPT_ID])){
-				System.out.println("false : "+csv[PosUtils.ITEM_NAME]);
+			else if(receipt_id.indexOf(csv[PosUtils.RECEIPT_ID]) < 0){
 				return;
 			}
 
-			System.out.println("true");
+			String item_category_code = csv[PosUtils.ITEM_CATEGORY_CODE].substring(0, 3).toString();
+			int item_count = Integer.parseInt(csv[PosUtils.ITEM_COUNT]);
 
-
-			String item_category_code = csv[PosUtils.ITEM_CATEGORY_CODE].substring(0, 3);
-			String item_count = csv[PosUtils.ITEM_COUNT];
-
-			int target_number = target_number(csv[PosUtils.ITEM_CATEGORY_CODE]);
-
-
-			//System.out.println(csv[PosUtils.ITEM_NAME]);
-
-
-			if(target_number<0){
+			if(save_item.containsKey(item_category_code) == false){
 				//新しいカテゴリー
-				sava_item_category.add(item_category_code);
-				save_item_count.add(Integer.valueOf(item_count).intValue());
+				save_item.put(item_category_code, item_count);
 			}
 			else{
 				//リスト内のデータを更新
-				save_item_count.set(target_number,save_item_count.get(target_number)+Integer.valueOf(item_count).intValue());
+
+				//ここがおかしい
+				save_item.put(item_category_code,save_item.get(item_category_code) + item_count);
 			}
-			return ;
-			//System.out.println(csv[PosUtils.ITEM_NAME]);
 
 			//文字列を無理やり連結してユニークなキーを作成
-			//String input_key = csv[PosUtils.RECEIPT_ID] +"_"+ item_category_code +"_"+ item_count;
+			String input_key = csv[PosUtils.RECEIPT_ID] +"_"+ csv[PosUtils.ITEM_NAME];
 
 			// emitする （emitデータはCSKVオブジェクトに変換すること）
-			//context.write(new CSKV(input_key), new CSKV(0));
+			context.write(new CSKV(input_key), new CSKV(0));
 		}
 	}
 
@@ -137,47 +130,15 @@ public class KindOfDrink {
 	 *	このメソッドはkeyごとに一度実行される．
 	 */
 	public static class MyReducer extends Reducer<CSKV, CSKV, CSKV, CSKV> {
-		int i=-1;
 		protected void reduce(CSKV key, Iterable<CSKV> values, Context context) throws IOException, InterruptedException {
-			i++;
 			//リスト内のデータのみを入れる
-			if(i < sava_item_category.size()){
+			if(save_item.size() <= 0){
 				return;
 			}
-
 			// emit(ドリンクの種類、個数)
-			context.write(new CSKV(sava_item_category.get(i)), new CSKV(save_item_count.get(i)));
+			context.write(new CSKV(save_item.firstKey()), new CSKV(save_item.get(save_item.firstKey())));
+			//入力したキーを削除
+			save_item.remove(save_item.firstKey());
 		}
-	}
-
-
-	/*
-	 * 同一のレシートIDがあるかを確認
-	 */
-	static boolean compare_list(String target){
-		//同じレシートidでないデータは無視
-		for(int i = 0; i < receipt_id.size() ;i++){
-			//リスト内の全レシートIDと比較
-			if(target==receipt_id.get(i)){
-				return true;
-			}
-		}
-		return false;
-	}
-	/*
-	 *targetデータがリスト内にあるかを確認
-	 *なければ、－１を返す
-	 */
-	static int target_number(String target){
-
-		//同じitem_categoryでないデータは無視
-		for(int i = 0; i < sava_item_category.size() ;i++){
-			//リスト内の全リストと比較
-			if(target==sava_item_category.get(i)){
-				return i;
-			}
-		}
-		//なければ、-1を返す
-		return -1;
 	}
 }
